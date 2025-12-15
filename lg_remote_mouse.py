@@ -150,7 +150,8 @@ async def websocket_handler(request):
     await ws.prepare(request)
 
     await ws.send_str("Connecting to TV...");
-    client = WebOsClient(request.app["host"], request.app["client_key"])
+    config = request.app["config"]
+    client = WebOsClient(config["tv_ip"], config["client_key"])
     await client.register_state_update_callback(on_state_change)
     await client.connect()
     await ws.send_str("Connected to TV");
@@ -176,15 +177,11 @@ async def websocket_handler(request):
     return ws
 
 def main():
-    HOST = "192.168.1.213"
-    file_path = "data.json"
-
-    with open(file_path, "r") as f:
-        store = json.load(f)
+    with open("config.json", "r") as f:
+        config = json.load(f)
         
     app = web.Application()
-    app["client_key"] = store["client_key"]
-    app["host"] = HOST
+    app["config"] = config
     app.router.add_get("/", handle_index)
     app.router.add_get("/ws", websocket_handler) 
     web.run_app(app, port=8080)
